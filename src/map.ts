@@ -1,6 +1,6 @@
 import { Map as MapLibre, setWorkerUrl, type PointLike } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
-import { parent, tileAt, type Tile } from '../shared/tiles';
+import { centre, parent, tileAt, type Tile } from '../shared/tiles';
 import { inkLog } from './ink';
 import type { Look } from './look';
 
@@ -11,6 +11,8 @@ export const BASEMAP = 'https://tiles.openfreemap.org/styles/positron';
 export const INK = 'ink';
 /** Ink tiles exist to z16; past that the map just magnifies them. */
 export const MAX_ZOOM = 18;
+/** The whole globe on a phone. */
+export const WORLD_ZOOM = 1.4;
 
 /** Positron, stripped to a faint tracing hint: water, roads, rivers, borders, building outlines. */
 export function restyle(map: MapLibre, look: Look) {
@@ -38,7 +40,7 @@ export function setProjection(map: MapLibre, look: Look) {
 export type View = { center: [number, number]; zoom: number };
 
 /** The browsing map: the faint basemap with every drawn square painted over it. */
-export function createMap(el: HTMLElement, look: Look, view: View = { center: [0, 20], zoom: 1.4 }): MapLibre {
+export function createMap(el: HTMLElement, look: Look, view: View = { center: [0, 20], zoom: WORLD_ZOOM }): MapLibre {
   el.style.background = look.paper;
   const map = new MapLibre({
     container: el, style: BASEMAP, ...view,
@@ -75,4 +77,11 @@ export function refresh(map: MapLibre, keys: Iterable<string>) {
     if (hit) redo.push(t);
   }
   if (redo.length && map.getSource(INK)) map.refreshTiles(INK, redo);
+}
+
+/** Centre a square, about two thirds of the shorter side across. The first few levels are the whole globe anyway. */
+export function flyToSquare(map: MapLibre, t: Tile) {
+  const { lat, lon } = centre(t), side = Math.min(map.getContainer().clientWidth, map.getContainer().clientHeight);
+  const zoom = Math.max(WORLD_ZOOM, Math.min(MAX_ZOOM, t.z + Math.log2((side * 0.66) / 512)));
+  map.flyTo({ center: [lon, lat], zoom, duration: 1600, essential: true });
 }
