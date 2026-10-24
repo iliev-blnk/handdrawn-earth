@@ -72,3 +72,6 @@ button.text { border: 0; padding: 4px 0; background: none; color: var(--muted); 
 
 .maplibregl-ctrl.maplibregl-ctrl-attrib { background: var(--paper); color: var(--muted); }
 .maplibregl-ctrl-attrib a { color: inherit; }
+.maplibregl-ctrl.maplibregl-ctrl-attrib.maplibregl-compact:not(.maplibregl-compact-show) { background: none; }
+.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button { background: none; border: 1px solid var(--muted); color: var(--muted); font: 12px/22px var(--font); text-align: center; }
+.maplibregl-ctrl-attrib .maplibregl-ctrl-attrib-button::before { content: 'i'; }

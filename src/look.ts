@@ -2,6 +2,8 @@
 export type Look = {
   id: string;
   paper: string;
+  /** Behind the globe, where there is no Earth. */
+  space: string;
   ink: string;
   /** Tracing hint: roads, borders, building outlines. */
   hint: string;
@@ -26,32 +28,32 @@ export type Look = {
 
 const MONO = '"Geist Mono", ui-monospace, Menlo, monospace';
 
-/** The spike's look: blue ballpoint on cool grey paper. The default until the look sheet pick. */
-export const DEFAULT_LOOK: Look = {
-  id: 'ballpoint',
-  paper: '#f1f2f4',
-  ink: '#0d2f8a',
-  hint: '#a7afc0',
-  muted: '#6b7385',
-  accent: '#e2471e',
-  water: '#dde3ee',
-  waterLine: '#9fb0cc',
-  inkWidth: 2.4,
-  grid: 0.5,
-  basemap: 1,
-  globe: true,
-  square: 512,
-  chrome: 'boxed',
-  font: MONO,
-};
-
-/** The four directions on the look sheet. Each changes the ink and paper and one or two toggles. */
+/** The four directions from the look sheet. Each changes the ink and paper and one or two toggles. */
 export const LOOKS: Record<string, Look> = {
-  ballpoint: DEFAULT_LOOK,
+  // The spike's look: blue ballpoint on cool grey paper.
+  ballpoint: {
+    id: 'ballpoint',
+    paper: '#f1f2f4',
+    space: '#f1f2f4',
+    ink: '#0d2f8a',
+    hint: '#a7afc0',
+    muted: '#6b7385',
+    accent: '#e2471e',
+    water: '#dde3ee',
+    waterLine: '#9fb0cc',
+    inkWidth: 2.4,
+    grid: 0.5,
+    basemap: 1,
+    globe: true,
+    square: 512,
+    chrome: 'boxed',
+    font: MONO,
+  },
   // White on Prussian blue, the sun-print process. Smaller squares: a patchwork on a phone.
   cyanotype: {
     id: 'cyanotype',
     paper: '#12396b',
+    space: '#0a2142',
     ink: '#f2f6fb',
     hint: '#4f75a6',
     muted: '#9db4d3',
@@ -70,6 +72,7 @@ export const LOOKS: Record<string, Look> = {
   pencil: {
     id: 'pencil',
     paper: '#f5f5f3',
+    space: '#f5f5f3',
     ink: '#3a3d42',
     hint: '#c4c7cc',
     muted: '#80848b',
@@ -88,6 +91,7 @@ export const LOOKS: Record<string, Look> = {
   marker: {
     id: 'marker',
     paper: '#ffffff',
+    space: '#ffffff',
     ink: '#111111',
     hint: '#bdbdbd',
     muted: '#6e6e6e',
@@ -103,6 +107,9 @@ export const LOOKS: Record<string, Look> = {
     font: MONO,
   },
 };
+
+/** Cyanotype, picked from the look sheet on 2026-10-25. */
+export const DEFAULT_LOOK: Look = LOOKS.cyanotype;
 
 /** `?look=<id>` picks a direction, for the look sheet. Anything else gets the default. */
 export function pickLook(search: string): Look {

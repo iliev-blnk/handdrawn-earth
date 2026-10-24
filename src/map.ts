@@ -38,7 +38,7 @@ export type View = { center: [number, number]; zoom: number };
 
 /** The browsing map: the faint basemap with every drawn square painted over it. */
 export function createMap(el: HTMLElement, look: Look, view: View = { center: [0, 20], zoom: WORLD_ZOOM }): MapLibre {
-  el.style.background = look.paper;
+  el.style.background = look.space;
   const map = new MapLibre({
     container: el, style: BASEMAP, ...view,
     maxZoom: MAX_ZOOM, renderWorldCopies: true, fadeDuration: 0,

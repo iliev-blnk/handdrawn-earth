@@ -7,6 +7,10 @@ describe('pickLook', () => {
     expect(pickLook('?x=1&look=marker').id).toBe('marker');
   });
 
+  it('defaults to the picked look, cyanotype', () => {
+    expect(DEFAULT_LOOK.id).toBe('cyanotype');
+  });
+
   it('falls back to the default for no name or an unknown one', () => {
     expect(pickLook('')).toBe(DEFAULT_LOOK);
     expect(pickLook('?look=nope')).toBe(DEFAULT_LOOK);
@@ -23,8 +27,12 @@ describe('LOOKS', () => {
 
   it('gives every colour as a six-digit hex', () => {
     for (const look of Object.values(LOOKS))
-      for (const k of ['paper', 'ink', 'hint', 'muted', 'accent', 'water', 'waterLine'] as const)
+      for (const k of ['paper', 'space', 'ink', 'hint', 'muted', 'accent', 'water', 'waterLine'] as const)
         expect(look[k], `${look.id}.${k}`).toMatch(/^#[0-9a-f]{6}$/);
+  });
+
+  it('sets the picked globe off from the space around it, so a drawn-over world keeps its edge', () => {
+    expect(DEFAULT_LOOK.space).not.toBe(DEFAULT_LOOK.paper);
   });
 
   it('shows squares at 512 or 256 px', () => {
