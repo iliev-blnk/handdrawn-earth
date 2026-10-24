@@ -11,6 +11,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p . && tsc --noEmit -p api",
     "smoke": "node e2e/smoke.mjs",
+    "looksheet": "node e2e/looksheet.mjs",
     "deploy:api": "wrangler deploy --config api/wrangler.jsonc",
     "deploy:site": "pnpm build && wrangler pages deploy dist --project-name handdrawn-earth --branch main"
   },

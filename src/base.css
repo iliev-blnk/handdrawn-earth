@@ -64,3 +64,11 @@ button.text { border: 0; padding: 4px 0; background: none; color: var(--muted); 
 .shell-bottom > * { pointer-events: auto; }
 .shell-note { width: fit-content; max-width: 320px; margin: 8px 0 0; padding: 4px 6px; background: var(--paper); color: var(--muted); }
 .shell-note:empty { display: none; }
+
+/* Label chrome: boxed is the default above; plain drops the boxes; bare drops the coordinates too. */
+[data-chrome="plain"] .pad-label, [data-chrome="bare"] .pad-label { border-color: transparent; padding-left: 0; padding-right: 0; }
+[data-chrome="plain"] .sheet, [data-chrome="bare"] .sheet { border-color: var(--hint); }
+[data-chrome="bare"] .pad-meta, [data-chrome="bare"] .sheet-head + .sheet-meta { display: none; }
+
+.maplibregl-ctrl.maplibregl-ctrl-attrib { background: var(--paper); color: var(--muted); }
+.maplibregl-ctrl-attrib a { color: inherit; }

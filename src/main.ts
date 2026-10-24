@@ -5,15 +5,16 @@ import { isTile, key, MAX_Z, type Tile } from '../shared/tiles';
 import { ApiError, createApi } from './api';
 import { registerInk } from './ink';
 import { OFFLINE, sentence } from './label';
-import { applyLook, DEFAULT_LOOK } from './look';
-import { createMap, flyToSquare, refresh, tileAtPoint, WORLD_ZOOM } from './map';
+import { applyLook, pickLook } from './look';
+import { createMap, flyToSquare, refresh, tileAtPoint } from './map';
 import { createPad, loadDraft } from './pad';
 import { createSheet } from './sheet';
 import { Store } from './store';
+import { displayLevel, WORLD_ZOOM } from './zoom';
 
 const api = createApi();
 const store = new Store(api, Date.now);
-const look = DEFAULT_LOOK;
+const look = pickLook(location.search);
 applyLook(look);
 registerInk(maplibregl, store, () => look);
 
@@ -36,7 +37,7 @@ store.watch(changed);
 const pad = createPad({
   api, store, look: () => look, changed,
   // Your square, on the map now, with its replay.
-  saved: (id, t) => { changed(store.addSaved(id, t)); flyToSquare(map, t); sheet.show(t); },
+  saved: (id, t) => { changed(store.addSaved(id, t)); flyToSquare(map, t, look.square); sheet.show(t); },
 });
 const sheet = createSheet(map, {
   api, store, look: () => look, changed,
@@ -46,7 +47,7 @@ const sheet = createSheet(map, {
     history.replaceState(null, '', t ? `#${key(t)}` : location.pathname + location.search);
   },
 });
-map.on('click', e => sheet.show(tileAtPoint(map, e.point, Math.max(0, Math.min(MAX_Z, Math.round(map.getZoom()))))));
+map.on('click', e => sheet.show(tileAtPoint(map, e.point, displayLevel(map.getZoom(), look.square))));
 
 drawBtn.onclick = async () => {
   drawBtn.disabled = true;
@@ -69,7 +70,7 @@ function fromHash(): Tile | null {
 const openHash = (duration: number) => {
   const t = fromHash();
   if (!t || (sheet.current && key(sheet.current) === key(t))) return;
-  flyToSquare(map, t, duration);
+  flyToSquare(map, t, look.square, duration);
   sheet.show(t);
 };
 map.once('load', () => openHash(0));
@@ -79,4 +80,4 @@ const draft = loadDraft();
 if (draft) pad.open(draft.lease, draft);
 
 // For e2e checks.
-Object.assign(window, { __earth: { map, store, pad, sheet, api } });
+Object.assign(window, { __earth: { map, store, pad, sheet, api, look } });

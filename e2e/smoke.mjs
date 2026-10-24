@@ -1,46 +1,18 @@
 // End to end on a throwaway world: its own API (fresh storage) and its own site, on spare ports.
 // Walks the paths a person can hit that unit tests can't: a resize between strokes, Keep on a dead
 // network then a retry, and losing a square to someone who saved first.
-import { spawn } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { launch } from './browser.mjs';
+import { startStack } from './stack.mjs';
 
-const API_PORT = 8791, SITE_PORT = 5181, INSPECTOR_PORT = 9331;
-const API = `http://localhost:${API_PORT}`, SITE = `http://localhost:${SITE_PORT}`;
-const ROOT = new URL('..', import.meta.url).pathname;
-const persist = mkdtempSync(join(tmpdir(), 'hde-smoke-'));
-const kids = [];
-
-function run(args, env = {}) {
-  const p = spawn('pnpm', ['exec', ...args], { cwd: ROOT, env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'], detached: true });
-  const kid = { name: args[0], out: '' };
-  p.stdout.on('data', d => { kid.out += d; });
-  p.stderr.on('data', d => { kid.out += d; });
-  kid.p = p;
-  kids.push(kid);
-}
-async function up(url, ms = 90_000) {
-  for (const end = Date.now() + ms; Date.now() < end; await new Promise(r => setTimeout(r, 300)))
-    try { if ((await fetch(url)).ok) return; } catch {}
-  throw new Error(`${url} never came up`);
-}
-function stop() {
-  for (const { p } of kids) try { process.kill(-p.pid, 'SIGTERM'); } catch {}
-  rmSync(persist, { recursive: true, force: true });
-}
+let stack;
 const ok = (name, cond, detail = '') => {
   console.log(`${cond ? 'ok  ' : 'FAIL'} ${name}${detail ? ` (${detail})` : ''}`);
   if (!cond) throw new Error(name);
 };
-const post = async (path, body) => (await fetch(API + path, { method: 'POST', body: JSON.stringify(body) })).json();
 
 async function main() {
-  run(['wrangler', 'dev', '--config', 'api/wrangler.jsonc', '--port', String(API_PORT), '--inspector-port', String(INSPECTOR_PORT),
-    '--persist-to', persist, '--var', `ALLOW_ORIGINS:${SITE}`]);
-  run(['vite', '--port', String(SITE_PORT), '--strictPort'], { VITE_API: API });
-  await Promise.all([up(`${API}/hello`), up(SITE)]);
+  stack = await startStack({ apiPort: 8791, sitePort: 5181, inspectorPort: 9331 });
+  const { SITE, post } = stack;
 
   const browser = await launch();
   try {
@@ -129,8 +101,8 @@ try {
   console.log('smoke: all passed');
 } catch (e) {
   console.error(`smoke: ${e.message}`);
-  for (const k of kids) console.error(`--- ${k.name}\n${k.out.slice(-1500)}`);
+  if (stack) console.error(stack.logs());
   process.exitCode = 1;
 } finally {
-  stop();
+  stack?.stop();
 }

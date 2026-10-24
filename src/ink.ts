@@ -3,7 +3,7 @@ import type { Look } from './look';
 import { paintFrame, paintStrokes } from './render';
 import type { Store } from './store';
 
-/** Ink tiles are drawn at 1024 px and shown at 512, so lines stay sharp on 2× screens. */
+/** Ink tiles are drawn at twice the size they show (1024 px for a 512 px square), so lines stay sharp on 2× screens. */
 export const TILE_PX = 1024;
 export const ANCESTOR_ALPHA = 0.35;
 
@@ -56,7 +56,7 @@ export function registerInk(maplibre: { addProtocol: typeof import('maplibre-gl'
     inkLog.asked.set(k, t);
     if (inkLog.asked.size > ASKED_MAX) inkLog.asked.delete(inkLog.asked.keys().next().value!);
     try {
-      const cv = await renderTile(t, store, look());
+      const l = look(), cv = await renderTile(t, store, l, l.square * 2);
       inkLog.failed.delete(k);
       return { data: cv.transferToImageBitmap() };
     } catch (e) {

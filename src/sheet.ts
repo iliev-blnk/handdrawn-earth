@@ -193,7 +193,7 @@ export function createSheet(map: MapLibre, deps: SheetDeps) {
     }
     const up = frontierAbove(t);
     showOpen('Draw the square above it first.', 'Show me', () => {
-      flyToSquare(map, up);
+      flyToSquare(map, up, deps.look().square);
       show(up);
     });
   }

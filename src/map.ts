@@ -3,16 +3,13 @@ import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { centre, parent, tileAt, type Tile } from '../shared/tiles';
 import { inkLog } from './ink';
 import type { Look } from './look';
+import { MAX_ZOOM, squareZoom, WORLD_ZOOM } from './zoom';
 
 // MapLibre finds its worker next to its own module, which Vite's dependency bundling moves. Point at it directly.
 setWorkerUrl(workerUrl);
 
 export const BASEMAP = 'https://tiles.openfreemap.org/styles/positron';
 export const INK = 'ink';
-/** Ink tiles exist to z16; past that the map just magnifies them. */
-export const MAX_ZOOM = 18;
-/** The whole globe on a phone. */
-export const WORLD_ZOOM = 1.4;
 
 /** Positron, stripped to a faint tracing hint: water, roads, rivers, borders, building outlines. */
 export function restyle(map: MapLibre, look: Look) {
@@ -49,12 +46,14 @@ export function createMap(el: HTMLElement, look: Look, view: View = { center: [0
   });
   // Top right: the bottom of the screen belongs to the sheet and the Draw button.
   map.addControl(new AttributionControl({ compact: true }), 'top-right');
+  // MapLibre opens it until the first drag; on a phone it covers the title until then.
+  map.once('idle', () => el.querySelector('.maplibregl-compact-show')?.classList.remove('maplibregl-compact-show'));
   map.touchZoomRotate.disableRotation();
   map.keyboard.disableRotation();
   map.on('style.load', () => {
     restyle(map, look);
     setProjection(map, look);
-    map.addSource(INK, { type: 'raster', tiles: ['ink://{z}/{x}/{y}'], tileSize: 512, minzoom: 0, maxzoom: 16 });
+    map.addSource(INK, { type: 'raster', tiles: ['ink://{z}/{x}/{y}'], tileSize: look.square, minzoom: 0, maxzoom: 16 });
     map.addLayer({ id: INK, type: 'raster', source: INK, paint: { 'raster-fade-duration': 250, 'raster-resampling': 'linear' } });
   });
   map.on('error', e => console.warn('map:', e.error?.message ?? e));
@@ -81,9 +80,8 @@ export function refresh(map: MapLibre, keys: Iterable<string>) {
   if (redo.length && map.getSource(INK)) map.refreshTiles(INK, redo);
 }
 
-/** Centre a square, about two thirds of the shorter side across. The first few levels are the whole globe anyway. */
-export function flyToSquare(map: MapLibre, t: Tile, duration = 1600) {
+/** Centre a square at a zoom where the map shows that square's own drawing. */
+export function flyToSquare(map: MapLibre, t: Tile, square: number, duration = 1600) {
   const { lat, lon } = centre(t), side = Math.min(map.getContainer().clientWidth, map.getContainer().clientHeight);
-  const zoom = Math.max(WORLD_ZOOM, Math.min(MAX_ZOOM, t.z + Math.log2((side * 0.66) / 512)));
-  map.flyTo({ center: [lon, lat], zoom, duration, essential: true });
+  map.flyTo({ center: [lon, lat], zoom: squareZoom(t.z, side, square), duration, essential: true });
 }
