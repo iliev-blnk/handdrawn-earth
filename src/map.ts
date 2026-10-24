@@ -1,4 +1,4 @@
-import { Map as MapLibre, setWorkerUrl, type PointLike } from 'maplibre-gl';
+import { AttributionControl, Map as MapLibre, setWorkerUrl, type PointLike } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { centre, parent, tileAt, type Tile } from '../shared/tiles';
 import { inkLog } from './ink';
@@ -45,8 +45,10 @@ export function createMap(el: HTMLElement, look: Look, view: View = { center: [0
   const map = new MapLibre({
     container: el, style: BASEMAP, ...view,
     maxZoom: MAX_ZOOM, renderWorldCopies: true, fadeDuration: 0,
-    attributionControl: { compact: true }, dragRotate: false, pitchWithRotate: false,
+    attributionControl: false, dragRotate: false, pitchWithRotate: false,
   });
+  // Top right: the bottom of the screen belongs to the sheet and the Draw button.
+  map.addControl(new AttributionControl({ compact: true }), 'top-right');
   map.touchZoomRotate.disableRotation();
   map.keyboard.disableRotation();
   map.on('style.load', () => {

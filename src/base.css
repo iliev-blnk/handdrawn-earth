@@ -38,3 +38,18 @@ button[hidden], [hidden] { display: none !important; }
 .pad-hint { color: var(--muted); margin: 10px 0 0 var(--o); }
 .pad-foot { color: var(--muted); font-size: 11px; margin: 32px 0 0 var(--o); }
 .pad-foot a { color: inherit; }
+
+button.text { border: 0; padding: 4px 0; background: none; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+.sheet {
+  position: fixed; z-index: 5; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom));
+  max-width: 352px; background: var(--paper); border: 1px solid var(--ink); padding: 8px 12px 12px;
+}
+.sheet-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.sheet-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sheet-meta { color: var(--muted); font-size: 12px; }
+.sheet-replay { display: block; margin-top: 10px; }
+.sheet-actions { display: flex; gap: 14px; align-items: center; margin-top: 10px; }
+.sheet-say { margin: 10px 0 0; }
+.sheet-note { color: var(--muted); margin: 8px 0 0; }
+.sheet-note:empty { display: none; }
