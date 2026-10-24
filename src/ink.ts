@@ -42,12 +42,26 @@ export async function renderTile(t: Tile, store: Store, look: Look, size = TILE_
   return cv;
 }
 
-/** `ink://z/x/y?v=N`: every ink tile is painted here from strokes, never fetched as an image. */
+/** Squares the map has asked for (newest last), and the ones that failed to paint, so a refresh knows what to redo. */
+export const inkLog = { asked: new Map<string, Tile>(), failed: new Set<string>() };
+const ASKED_MAX = 2048;
+
+/** `ink://z/x/y`: every ink tile is painted here from strokes, never fetched as an image. */
 export function registerInk(maplibre: { addProtocol: typeof import('maplibre-gl').addProtocol }, store: Store, look: () => Look) {
   maplibre.addProtocol('ink', async params => {
     const m = /^ink:\/\/(\d+)\/(\d+)\/(\d+)/.exec(params.url);
     if (!m) throw new Error(`bad ink url ${params.url}`);
-    const cv = await renderTile({ z: +m[1], x: +m[2], y: +m[3] }, store, look());
-    return { data: cv.transferToImageBitmap() };
+    const t = { z: +m[1], x: +m[2], y: +m[3] }, k = `${t.z}/${t.x}/${t.y}`;
+    inkLog.asked.delete(k);
+    inkLog.asked.set(k, t);
+    if (inkLog.asked.size > ASKED_MAX) inkLog.asked.delete(inkLog.asked.keys().next().value!);
+    try {
+      const cv = await renderTile(t, store, look());
+      inkLog.failed.delete(k);
+      return { data: cv.transferToImageBitmap() };
+    } catch (e) {
+      inkLog.failed.add(k);
+      throw e;
+    }
   });
 }

@@ -1,0 +1,8 @@
+:root {
+  --paper: #f1f2f4; --ink: #0d2f8a; --hint: #a7afc0; --muted: #6b7385; --accent: #e2471e; --water: #dde3ee;
+  --font: "Geist Mono", ui-monospace, Menlo, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--paper); color: var(--ink); }
+body { font: 13px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+#map { position: fixed; inset: 0; }
