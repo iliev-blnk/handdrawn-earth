@@ -5,3 +5,4 @@ dist
 .dev.vars
 e2e/out
 *.log
+.cache
