@@ -82,8 +82,8 @@ export function refresh(map: MapLibre, keys: Iterable<string>) {
 }
 
 /** Centre a square, about two thirds of the shorter side across. The first few levels are the whole globe anyway. */
-export function flyToSquare(map: MapLibre, t: Tile) {
+export function flyToSquare(map: MapLibre, t: Tile, duration = 1600) {
   const { lat, lon } = centre(t), side = Math.min(map.getContainer().clientWidth, map.getContainer().clientHeight);
   const zoom = Math.max(WORLD_ZOOM, Math.min(MAX_ZOOM, t.z + Math.log2((side * 0.66) / 512)));
-  map.flyTo({ center: [lon, lat], zoom, duration: 1600, essential: true });
+  map.flyTo({ center: [lon, lat], zoom, duration, essential: true });
 }

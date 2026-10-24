@@ -1,7 +1,8 @@
 import type { GeoJSONSource, Map as MapLibre } from 'maplibre-gl';
-import { bounds, centre, kmAcross, key, type Tile } from '../shared/tiles';
+import { bounds, key, type Tile } from '../shared/tiles';
 import type { Lease, PointerKind } from '../shared/types';
 import { ApiError, type Api } from './api';
+import { meta, OFFLINE, sentence } from './label';
 import type { Look } from './look';
 import { flyToSquare } from './map';
 import { nameFor } from './names';
@@ -24,14 +25,6 @@ export type SheetDeps = {
 };
 
 const POINTERS: Record<PointerKind, string> = { touch: 'phone', mouse: 'mouse', pen: 'pen' };
-const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(4)}° ${v < 0 ? neg : pos}`;
-const cap = (s: string) => s[0].toUpperCase() + s.slice(1) + (/[.!?]$/.test(s) ? '' : '.');
-
-function across(t: Tile) {
-  const km = kmAcross(t);
-  if (km >= 100) return `${Math.round(km).toLocaleString('en-US')} km across`;
-  return km >= 1 ? `${km.toFixed(1)} km across` : `${Math.round(km * 1000)} m across`;
-}
 
 function when(createdSec: number, now = Date.now()) {
   const s = now / 1000 - createdSec;
@@ -128,9 +121,8 @@ export function createSheet(map: MapLibre, deps: SheetDeps) {
   }
 
   function label(t: Tile) {
-    const c = centre(t);
     nameEl.textContent = nameFor(map, t);
-    metaEl.textContent = `${deg(c.lat, 'N', 'S')} ${deg(c.lon, 'E', 'W')} · ${across(t)} · ${key(t)}`;
+    metaEl.textContent = meta(t);
   }
 
   async function showDrawn(t: Tile, mine: number) {
@@ -195,7 +187,7 @@ export function createSheet(map: MapLibre, deps: SheetDeps) {
             deps.changed(keys);
             return show(t);
           }
-          note(e instanceof ApiError ? cap(e.message) : 'No connection. Try again in a moment.');
+          note(e instanceof ApiError ? sentence(e.message) : OFFLINE);
         }
       });
     }
@@ -228,7 +220,7 @@ export function createSheet(map: MapLibre, deps: SheetDeps) {
     } catch (e) {
       if (mine !== gen) return;
       btn('flag').disabled = false;
-      note(e instanceof ApiError ? cap(e.message) : 'No connection. Try again in a moment.');
+      note(e instanceof ApiError ? sentence(e.message) : OFFLINE);
     }
   }
 

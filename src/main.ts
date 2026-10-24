@@ -1,10 +1,11 @@
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './base.css';
 import * as maplibregl from 'maplibre-gl';
-import { createApi } from './api';
+import { isTile, key, MAX_Z, type Tile } from '../shared/tiles';
+import { ApiError, createApi } from './api';
 import { registerInk } from './ink';
+import { OFFLINE, sentence } from './label';
 import { applyLook, DEFAULT_LOOK } from './look';
-import { MAX_Z } from '../shared/tiles';
 import { createMap, flyToSquare, refresh, tileAtPoint, WORLD_ZOOM } from './map';
 import { createPad, loadDraft } from './pad';
 import { createSheet } from './sheet';
@@ -16,11 +17,20 @@ const look = DEFAULT_LOOK;
 applyLook(look);
 registerInk(maplibregl, store, () => look);
 
+const $ = <T extends HTMLElement>(sel: string) => document.querySelector(sel) as T;
+const countEl = $('.shell-count'), bottom = $('.shell-bottom'), drawBtn = $<HTMLButtonElement>('.shell-draw'), noteEl = $('.shell-note');
+const showCount = () => {
+  const n = store.count;
+  countEl.textContent = `${n.toLocaleString('en-US')} ${n === 1 ? 'square' : 'squares'} drawn`;
+};
+
 const [hello] = await Promise.all([api.hello().catch(() => null), store.load().catch(e => console.warn('index:', e))]);
+showCount();
+// The first view faces the visitor's own side of the planet.
 const map = createMap(document.getElementById('map')!, look, {
   center: [hello?.lon ?? 10, hello?.lat ?? 30], zoom: WORLD_ZOOM,
 });
-const changed = (keys: string[]) => { refresh(map, keys); sheet.changed(keys); };
+const changed = (keys: string[]) => { refresh(map, keys); sheet.changed(keys); showCount(); };
 store.watch(changed);
 
 const pad = createPad({
@@ -28,8 +38,43 @@ const pad = createPad({
   // Your square, on the map now, with its replay.
   saved: (id, t) => { changed(store.addSaved(id, t)); flyToSquare(map, t); sheet.show(t); },
 });
-const sheet = createSheet(map, { api, store, look: () => look, changed, draw: lease => pad.open(lease) });
+const sheet = createSheet(map, {
+  api, store, look: () => look, changed,
+  draw: lease => pad.open(lease),
+  shown: t => {
+    bottom.hidden = !!t;
+    history.replaceState(null, '', t ? `#${key(t)}` : location.pathname + location.search);
+  },
+});
 map.on('click', e => sheet.show(tileAtPoint(map, e.point, Math.max(0, Math.min(MAX_Z, Math.round(map.getZoom()))))));
+
+drawBtn.onclick = async () => {
+  drawBtn.disabled = true;
+  noteEl.textContent = '';
+  try {
+    pad.open(await api.lease());
+  } catch (e) {
+    noteEl.textContent = e instanceof ApiError ? sentence(e.message) : OFFLINE;
+  } finally {
+    drawBtn.disabled = false;
+  }
+};
+
+/** `#z/x/y` opens that square. */
+function fromHash(): Tile | null {
+  const m = /^#(\d{1,2})\/(\d{1,6})\/(\d{1,6})$/.exec(location.hash);
+  const t = m && { z: +m[1], x: +m[2], y: +m[3] };
+  return t && isTile(t, MAX_Z) ? t : null;
+}
+const openHash = (duration: number) => {
+  const t = fromHash();
+  if (!t || (sheet.current && key(sheet.current) === key(t))) return;
+  flyToSquare(map, t, duration);
+  sheet.show(t);
+};
+map.once('load', () => openHash(0));
+addEventListener('hashchange', () => openHash(1600));
+
 const draft = loadDraft();
 if (draft) pad.open(draft.lease, draft);
 

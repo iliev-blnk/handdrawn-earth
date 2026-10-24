@@ -1,8 +1,9 @@
 import { Map as MapLibre } from 'maplibre-gl';
-import { centre, kmAcross, key, parse, type Tile } from '../shared/tiles';
+import { centre, parse, type Tile } from '../shared/tiles';
 import type { DisplayStroke, DrawingIn, Lease, Point, PointerKind, Stroke } from '../shared/types';
 import { LIMIT_MS, MAX_POINTS, MAX_STROKES, MIN_POINTS } from '../shared/validate';
 import { ApiError, type Api } from './api';
+import { meta, OFFLINE, sentence } from './label';
 import type { Look } from './look';
 import { BASEMAP, restyle } from './map';
 import { nameFor, pickName } from './names';
@@ -43,12 +44,6 @@ export function loadDraft(): Draft | null {
 }
 const clearDraft = () => { try { sessionStorage.removeItem(DRAFT); } catch {} };
 
-const deg = (v: number, pos: string, neg: string) => `${Math.abs(v).toFixed(4)}° ${v < 0 ? neg : pos}`;
-function across(t: Tile) {
-  const km = kmAcross(t);
-  if (km >= 100) return `${Math.round(km).toLocaleString('en-US')} km across`;
-  return km >= 1 ? `${km.toFixed(1)} km across` : `${Math.round(km * 1000)} m across`;
-}
 const kind = (p: string): PointerKind => (p === 'pen' || p === 'touch' ? p : 'mouse');
 const clamp = (v: number) => Math.min(1.05, Math.max(-0.05, v));
 const round4 = (v: number) => Math.round(v * 1e4) / 1e4;
@@ -338,7 +333,7 @@ export function createPad(deps: PadDeps) {
     try {
       open(l ?? (await api.lease()));
     } catch (e) {
-      hint(e instanceof ApiError ? `${e.message[0].toUpperCase()}${e.message.slice(1)}.` : 'No connection. Try again in a moment.');
+      hint(e instanceof ApiError ? sentence(e.message) : OFFLINE);
     } finally {
       btn('another').disabled = false;
     }
@@ -374,7 +369,7 @@ export function createPad(deps: PadDeps) {
     clearTimeout(traceTimer);
     traceTimer = window.setTimeout(traceReady, TRACE_WAIT_MS);
     nameEl.textContent = pickName([], [], t); named = false;
-    metaEl.textContent = `${deg(centre(t).lat, 'N', 'S')} ${deg(centre(t).lon, 'E', 'W')} · ${across(t)} · ${key(t)}`;
+    metaEl.textContent = meta(t);
     reset();
     if (draft) {
       strokes = draft.strokes; duration = Math.min(LIMIT_MS, draft.duration); pointer = draft.pointer; started = draft.started;

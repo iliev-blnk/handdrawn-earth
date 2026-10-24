@@ -53,3 +53,14 @@ button.text { border: 0; padding: 4px 0; background: none; color: var(--muted); 
 .sheet-say { margin: 10px 0 0; }
 .sheet-note { color: var(--muted); margin: 8px 0 0; }
 .sheet-note:empty { display: none; }
+
+.shell-top {
+  position: fixed; z-index: 3; top: calc(12px + env(safe-area-inset-top)); left: 16px;
+  display: flex; flex-direction: column; pointer-events: none;
+}
+.shell-name { font-weight: 600; }
+.shell-count { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.shell-bottom { position: fixed; z-index: 3; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); pointer-events: none; }
+.shell-bottom > * { pointer-events: auto; }
+.shell-note { width: fit-content; max-width: 320px; margin: 8px 0 0; padding: 4px 6px; background: var(--paper); color: var(--muted); }
+.shell-note:empty { display: none; }
