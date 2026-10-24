@@ -48,6 +48,8 @@ export class World {
   private leaseOf = new Map<string, string>();
   private drawsBy = new Map<string, number[]>();
   private flagsBy = new Map<string, number[]>();
+  /** Which lease token saved which drawing, so a Keep retried after a lost reply gets its id, not a 409. */
+  private savedBy = new Map<string, number>();
   private salt: string;
   private macKey?: Promise<CryptoKey>;
 
@@ -120,6 +122,8 @@ export class World {
     if (!(await this.tokenOk(d.key, d.token))) return { status: 403, error: 'this square was not leased to you' };
 
     // No awaits from here to the insert.
+    const mine = this.savedBy.get(d.token);
+    if (mine !== undefined && this.drawn.get(d.key) === mine) return { id: mine };
     const now = this.now();
     const recent = this.recent(this.drawsBy, who, now);
     if (recent.length >= DRAWS_PER_HOUR) return { status: 429, error: 'twenty squares an hour is the limit' };
@@ -141,6 +145,8 @@ export class World {
     }
 
     recent.push(now);
+    this.savedBy.set(d.token, id);
+    if (this.savedBy.size > 5_000) this.savedBy.delete(this.savedBy.keys().next().value!);
     this.rows.push([id, t.z, t.x, t.y, Math.floor(now / 1000)]);
     this.drawn.set(d.key, id);
     this.frontier.delete(d.key);

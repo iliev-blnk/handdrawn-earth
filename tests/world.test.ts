@@ -75,6 +75,16 @@ describe('World', () => {
     expect(lease.key).not.toBe('1/0/0');
   });
 
+  it('a retried Keep whose first reply was lost gets its own id back, not a 409', async () => {
+    const { w } = setup();
+    await drawAt(w, 'owner', '0/0/0');
+    const l = await leaseOk(w, 'a', '1/0/0');
+    const first = await w.draw('a', body('1/0/0', l.token));
+    const again = await w.draw('a', body('1/0/0', l.token));
+    expect(again).toEqual(first);
+    expect(w.hello({}).count).toBe(2);
+  });
+
   it('a second live lease from the same IP replaces the first', async () => {
     const { w } = setup();
     await drawAt(w, 'owner', '0/0/0');
