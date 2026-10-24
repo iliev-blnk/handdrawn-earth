@@ -1,0 +1,17 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "handdrawn-earth-api",
+  "main": "index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "WORLD", "class_name": "WorldDO" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["WorldDO"] }],
+  "rules": [{ "type": "Data", "globs": ["**/*.bin"], "fallthrough": false }],
+  "vars": {
+    "ALLOW_ORIGINS": "https://handdrawn-earth.pages.dev,http://localhost:5173,http://127.0.0.1:5173",
+    // sha256 of the admin token kept in ~/.config/handdrawn-earth/admin-token, never in the repo
+    "ADMIN_TOKEN_SHA256": "826258145ccc77d0734d5f837580caa37025ac5791d6bf4d8c9429a3d17d7392"
+  }
+}
